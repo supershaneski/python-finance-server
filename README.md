@@ -91,8 +91,7 @@ http://localhost:8000/ticker?id=MSFT
    deactivate
    ```
   
-   > [!Note]
-   > Use `python` instead of `python3` if your system defaults to Python 3.
+   **Note:** Use `python` instead of `python3` if your system defaults to Python 3.
 
 3. **Install dependencies**:
    ```sh
