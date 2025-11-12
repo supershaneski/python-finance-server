@@ -1,6 +1,10 @@
 # python-finance-server
 
-A lightweight server built with Python's built-in `http.server` and powered by the [`yfinance`](https://pypi.org/project/yfinance/) library. This project fetches real-time and fundamental stock ticker data (company info, price, ratios, analyst ratings, etc.) via a simple REST-like API.
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
+[![yfinance](https://img.shields.io/badge/yfinance-v0.2.66-green)](https://github.com/ranaroussi/yfinance)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A lightweight server built with Python's built-in `http.server` and powered by the [`yfinance`](https://github.com/ranaroussi/yfinance) library. This project fetches real-time and fundamental stock ticker data (company info, price, ratios, analyst ratings, etc.) via a simple REST-like API.
 
 **Main Goal**: Learn how to use `yfinance` effectively while building a clean, cache-aware, microservice.
 
@@ -110,14 +114,14 @@ http://localhost:8000/ticker?id=MSFT
 
    Server starts at: `http://localhost:8000` (or your custom port)
 
-### Example Usage (curl)
+### Example Usage
 
+**curl**
 ```bash
 curl "http://localhost:8000/ticker?id=TSLA"
 ```
 
-### Example Usage (JavaScript / Fetch)
-
+**Javascript / Fetch**
 ```js
 fetch('http://localhost:8000/ticker?id=AAPL')
   .then(r => r.json())
