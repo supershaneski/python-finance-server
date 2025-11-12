@@ -85,7 +85,12 @@ http://localhost:8000/ticker?id=MSFT
     ```sh
     venv\Scripts\activate
     ```
-   
+   To deactivate
+
+   ```sh
+   deactivate
+   ```
+  
    > [!Note]
    > Use `python` instead of `python3` if your system defaults to Python 3.
 
