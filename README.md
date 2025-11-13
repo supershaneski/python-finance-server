@@ -16,7 +16,7 @@ Python の組み込みモジュール `http.server` を使用して構築され�
 
 ### Features
 
-- **Simple HTTP API**: `GET /ticker?id=AAPL`
+- **Simple HTTP API**: `GET /ticker?id=AAPL` or `GET /ticker?symbols=AAPL,MSFT`
 - **Caching**: 10-minute in-memory cache (configurable TTL)
 - **Clean JSON responses** with structured financial data
 - **Zero dependencies** beyond `yfinance`
@@ -33,28 +33,30 @@ http://localhost:8000/ticker?id=MSFT
 **Sample Response:**
 ```json
 {
-  "company": {
-    "name": "Microsoft Corporation",
-    "symbol": "MSFT",
-    "industry": "Software—Infrastructure",
-    "sector": "Technology"
-  },
-  "market": {
-    "currentPrice": 378.91,
-    "previousClose": 376.02,
-    "fiftyTwoWeekRange": "309.42 - 384.52",
-    "marketCap": 2814592000000
-  },
-  "performance": {
-    "trailingPE": 36.81,
-    "forwardPE": 32.15,
-    "dividendYield": 0.0079,
-    "earningsGrowth": 0.187,
-    "revenueGrowth": 0.152
-  },
-  "analyst": {
-    "recommendation": "buy",
-    "targetMeanPrice": 415.24
+  "MSFT": {
+    "company": {
+      "name": "Microsoft Corporation",
+      "symbol": "MSFT",
+      "industry": "Software—Infrastructure",
+      "sector": "Technology"
+    },
+    "market": {
+      "currentPrice": 378.91,
+      "previousClose": 376.02,
+      "fiftyTwoWeekRange": "309.42 - 384.52",
+      "marketCap": 2814592000000
+    },
+    "performance": {
+      "trailingPE": 36.81,
+      "forwardPE": 32.15,
+      "dividendYield": 0.0079,
+      "earningsGrowth": 0.187,
+      "revenueGrowth": 0.152
+    },
+    "analyst": {
+      "recommendation": "buy",
+      "targetMeanPrice": 415.24
+    }
   }
 }
 ```
@@ -125,9 +127,19 @@ http://localhost:8000/ticker?id=MSFT
 curl "http://localhost:8000/ticker?id=TSLA"
 ```
 
+```bash
+curl "http://localhost:8000/ticker?symbols=AAPL,MSFT"
+```
+
 **Javascript / Fetch**
 ```js
 fetch('http://localhost:8000/ticker?id=AAPL')
+  .then(r => r.json())
+  .then(data => console.log(data));
+```
+
+```js
+fetch('http://localhost:8000/ticker?symbols=TSLA,NVDA')
   .then(r => r.json())
   .then(data => console.log(data));
 ```

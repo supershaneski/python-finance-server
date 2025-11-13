@@ -107,29 +107,37 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
             }).encode())
         
         elif path == '/ticker':
-            # query params come as lists, e.g., {'id': ['AAPL']}
-            ticker_id = query.get('id', [None])[0]  
+            # Support both: ?id=AAPL and ?symbols=AAPL,MSFT
+            symbols_param = query.get('symbols', [None])[0] or query.get('id', [None])[0]
             
-            if not ticker_id:
+            if not symbols_param:
                 self.send_response(400)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": "Missing 'id' query param"}).encode())
+                self.wfile.write(json.dumps({"error": "Missing 'symbols' or 'id'"}).encode())
                 return
             
-            try:
-                data = get_stock_summary_cached(ticker_id)
-            except FinanceDataError as e:
+            symbols = [s.strip().upper() for s in symbols_param.split(',') if s.strip()]
+            if not symbols:
                 self.send_response(400)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": str(e)}).encode())
+                self.wfile.write(json.dumps({"error": "No valid symbols"}).encode())
                 return
+            
+            results = {}
+            for symbol in symbols:
+                try:
+                    data = get_stock_summary_cached(symbol)
+                    # data = {"error": "Error test"}
+                    results[symbol] = data
+                except FinanceDataError as e:
+                    results[symbol] = {"error": str(e)}
 
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps(data).encode())
+            self.wfile.write(json.dumps(results).encode())
         
         else:
             self.send_error(404, 'Not found')
