@@ -121,6 +121,18 @@ def get_stock_summary_multiple(symbols):
 
     return results
 
+def get_stock_summary_cached(symbol, ttl=600):
+    now = time.time()
+    if symbol in cache:
+        data, ts = cache[symbol]
+        if now - ts < ttl:
+            print(f"Retrieve data from cache: {symbol}")
+            return data
+    
+    data = get_stock_summary(symbol)
+    cache[symbol] = (data, now)
+    return data
+
 def is_cache_expired(cached_data, ttl_seconds: int = 600) -> bool:
     try:
         _, ts = cached_data  # (value, timestamp)
@@ -152,7 +164,37 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
             }).encode())
         
         elif path == '/ticker':
-            # Support both: ?id=AAPL and ?symbols=AAPL,MSFT
+            # Support only a single symbol: ?id=AAPL
+            symbol = query.get('id', [None])[0]  
+
+            if not symbol:
+                self.send_error(400, "Missing 'id' param")
+                return
+            
+            symbol = symbol.strip().upper()
+
+            if ',' in symbol:
+                self.send_error(400, "Only a single ticker symbol is allowed")
+                return
+            
+            results = {}
+            try:
+                data = get_stock_summary_cached(symbol)
+                results[symbol] = data
+            except FinanceDataError as e:
+                self.send_response(400)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
+                return
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(results).encode())
+
+        elif path == '/tickers':
+            # Support multiple symbol: ?symbols=AAPL,MSFT
             symbols_param = query.get('symbols', [None])[0] or query.get('id', [None])[0]
             
             if not symbols_param:

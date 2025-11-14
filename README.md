@@ -6,24 +6,33 @@
 
 A lightweight server built with Python's built-in `http.server` and powered by the [`yfinance`](https://github.com/ranaroussi/yfinance) library. This project fetches real-time and fundamental stock ticker data (company info, price, ratios, analyst ratings, etc.) via a simple REST-like API.
 
-**Main Goal**: Learn how to use `yfinance` effectively while building a clean, cache-aware, microservice.
-
 ---
 
 Python の組み込みモジュール `http.server` を使用して構築された軽量な **Backend For Frontend (BFF)** サーバーで、`yfinance`￼ ライブラリによって動作します。このプロジェクトは、シンプルな REST 風 API を通じて、リアルタイムおよび基本的な株式ティッカー情報（企業情報、株価、各種比率、アナリスト評価など）を取得します。
 
-**主な目的**：`yfinance` を効果的に活用しながら、クリーンでキャッシュ対応のマイクロサービスを構築する方法を学ぶこと。
+### Main Goal / 主な目的
+
+Learn how to use `yfinance` effectively while building a clean, cache-aware microservice that serves as a **Backend For Frontend (BFF)** for a client application. The server provides a simple, consistent API for stock ticker data, optimizes response times with caching, and allows the client app to focus on presentation and interaction logic.
+
+---
+
+`yfinance` を効果的に活用しつつ、クライアントアプリ向けの **Backend For Frontend (BFF)** として機能する、クリーンでキャッシュ対応のマイクロサービスを構築する方法を学ぶことが主な目的です。このサーバーは、株式ティッカー情報のシンプルで一貫性のある API を提供し、キャッシュによってレスポンス速度を最適化し、クライアントアプリは表示や操作に集中できる設計になっています。
 
 ### Features
 
-- **Simple HTTP API**: `GET /ticker?id=AAPL` or `GET /ticker?symbols=AAPL,MSFT`
-- **Caching**: 10-minute in-memory cache (configurable TTL)
-- **Clean JSON responses** with structured financial data
-- **Zero dependencies** beyond `yfinance`
+* **Simple HTTP API**:
+
+  * Single ticker: `GET /ticker?id=AAPL`
+  * Multi-tickers: `GET /tickers?symbols=AAPL,MSFT`
+* **Caching**: 10-minute in-memory cache (configurable TTL)
+* **Consistent JSON responses** keyed by ticker symbol (`{ SYMBOL: {...} }`)
+* **Zero dependencies** beyond `yfinance`
 
 ### API Endpoint
 
 #### `GET /ticker?id=<TICKER>`
+
+**Notes:** Only supports a single ticker. Returns JSON keyed by symbol.
 
 **Example:**
 ```
@@ -66,27 +75,52 @@ http://localhost:8000/ticker?id=MSFT
 { "error": "No data found for ticker 'INVALID'" }
 ```
 
+---
+
+#### `GET /tickers?symbols=<TICKER1,TICKER2,...>`
+
+**Notes:** Supports multiple comma-separated tickers. Returns JSON keyed by symbol.
+
+**Example:**
+
+```
+http://localhost:8000/tickers?symbols=AAPL,MSFT
+```
+
+**Sample Response:**
+
+```json
+{
+  "AAPL": { ... },
+  "MSFT": { ... }
+}
+```
+
+**Error Example (per ticker):**
+
+```json
+{
+  "AAPL": { ... },
+  "INVALID": { "error": "No data found for ticker 'INVALID'" }
+}
+```
+
 ### Setup
 
 1. **Clone or download this project**
     ```sh
-    git clone https://github.com/supershaneski/python-finance-server.git
+    git clone https://github.com/<yourname>/python-finance-server.git
     cd python-finance-server
     ```
 
 2. **Create and activate Virtual Environment**:
    ```sh
    python3 -m venv venv
+
+   source venv/bin/activate # Linux/macOS
+   venv\Scripts\activate # Windows
    ```
 
-   - Linux/macOS:
-    ```sh
-    source venv/bin/activate
-    ```
-   - Windows:
-    ```sh
-    venv\Scripts\activate
-    ```
    To deactivate
 
    ```sh
@@ -104,11 +138,10 @@ http://localhost:8000/ticker?id=MSFT
    Copy the example file `.env.example` to `.env` in the project root:
    ```sh
    cp .env.example .env  # Linux/macOS
-   # or
    copy .env.example .env  # Windows
    ```
 
-   Set the port you want to use
+   Set the server port you want to use:
    ```env
    SERVER_PORT=8000
    ```
@@ -125,10 +158,7 @@ http://localhost:8000/ticker?id=MSFT
 **curl**
 ```bash
 curl "http://localhost:8000/ticker?id=AAPL"
-```
-
-```bash
-curl "http://localhost:8000/ticker?symbols=AAPL,MSFT"
+curl "http://localhost:8000/tickers?symbols=AAPL,MSFT"
 ```
 
 **Javascript / Fetch**
@@ -136,10 +166,10 @@ curl "http://localhost:8000/ticker?symbols=AAPL,MSFT"
 fetch('http://localhost:8000/ticker?id=AAPL')
   .then(r => r.json())
   .then(data => console.log(data));
-```
 
-```js
-fetch('http://localhost:8000/ticker?symbols=AAPL,MSFT')
+fetch('http://localhost:8000/tickers?symbols=AAPL,MSFT')
   .then(r => r.json())
   .then(data => console.log(data));
 ```
+
+---
