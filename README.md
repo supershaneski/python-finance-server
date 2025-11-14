@@ -124,7 +124,7 @@ http://localhost:8000/ticker?id=MSFT
 
 **curl**
 ```bash
-curl "http://localhost:8000/ticker?id=TSLA"
+curl "http://localhost:8000/ticker?id=AAPL"
 ```
 
 ```bash
@@ -139,7 +139,7 @@ fetch('http://localhost:8000/ticker?id=AAPL')
 ```
 
 ```js
-fetch('http://localhost:8000/ticker?symbols=TSLA,NVDA')
+fetch('http://localhost:8000/ticker?symbols=AAPL,MSFT')
   .then(r => r.json())
   .then(data => console.log(data));
 ```
