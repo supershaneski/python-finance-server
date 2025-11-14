@@ -133,13 +133,13 @@ curl "http://localhost:8000/ticker?symbols=AAPL,MSFT"
 
 **Javascript / Fetch**
 ```js
-fetch('http://localhost:8000/ticker?id=AAPL')
+fetch('http://localhost:8000/ticker?id=TSLA')
   .then(r => r.json())
   .then(data => console.log(data));
 ```
 
 ```js
-fetch('http://localhost:8000/ticker?symbols=TSLA,NVDA')
+fetch('http://localhost:8000/ticker?symbols=AAPL,MSFT')
   .then(r => r.json())
   .then(data => console.log(data));
 ```

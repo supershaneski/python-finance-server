@@ -70,18 +70,63 @@ def get_stock_summary(symbol):
         # Handle all other unexpected yfinance or network errors
         raise FinanceDataError(f"Failed to retrieve data for '{symbol}': {str(e)}")
 
+def get_stock_summary_multiple(symbols):
+    """
+    Fetch multiple tickers at once, keeping the same per-ticker output structure.
+    Returns a dict: symbol -> summary
+    """
+    print(f"Retrieve data from API: {', '.join(symbols)}")
+    results = {}
+    tickers_obj = yf.Tickers(' '.join(symbols))
 
-def get_stock_summary_cached(symbol, ttl=600):
-    now = time.time()
-    if symbol in cache:
-        data, ts = cache[symbol]
-        if now - ts < ttl:
-            print(f"Retrieve data from cache: {symbol}")
-            return data
-    
-    data = get_stock_summary(symbol)
-    cache[symbol] = (data, now)
-    return data
+    for symbol in symbols:
+        try:
+            t = tickers_obj.tickers.get(symbol)
+            if not t:
+                raise FinanceDataError(f"No ticker object for '{symbol}'")
+
+            info = t.info
+            if not info or "shortName" not in info:
+                raise FinanceDataError(f"No data found for ticker '{symbol}'")
+
+            results[symbol] = {
+                "company": {
+                    "name": info.get("shortName"),
+                    "symbol": info.get("symbol"),
+                    "industry": info.get("industry"),
+                    "sector": info.get("sector"),
+                },
+                "market": {
+                    "currentPrice": info.get("currentPrice"),
+                    "previousClose": info.get("previousClose"),
+                    "fiftyTwoWeekRange": info.get("fiftyTwoWeekRange"),
+                    "marketCap": info.get("marketCap"),
+                },
+                "performance": {
+                    "trailingPE": info.get("trailingPE"),
+                    "forwardPE": info.get("forwardPE"),
+                    "dividendYield": info.get("dividendYield"),
+                    "earningsGrowth": info.get("earningsGrowth"),
+                    "revenueGrowth": info.get("revenueGrowth"),
+                },
+                "analyst": {
+                    "recommendation": info.get("recommendationKey"),
+                    "targetMeanPrice": info.get("targetMeanPrice"),
+                },
+            }
+        except FinanceDataError:
+            raise
+        except Exception as e:
+            results[symbol] = {"error": f"Failed to retrieve data: {str(e)}"}
+
+    return results
+
+def is_cache_expired(cached_data, ttl_seconds: int = 600) -> bool:
+    try:
+        _, ts = cached_data  # (value, timestamp)
+        return (time.time() - ts) > ttl_seconds
+    except Exception:
+        return True
 
 # Load environment variables
 load_env()
@@ -111,34 +156,47 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
             symbols_param = query.get('symbols', [None])[0] or query.get('id', [None])[0]
             
             if not symbols_param:
-                self.send_response(400)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "Missing 'symbols' or 'id'"}).encode())
+                self.send_error(400, "Missing 'symbol' or 'id'")
                 return
             
-            symbols = [s.strip().upper() for s in symbols_param.split(',') if s.strip()]
+            # Split, strip, uppercase, remove duplicates
+            symbols = list(dict.fromkeys(
+                s.strip().upper() for s in symbols_param.split(',') if s.strip()
+            ))
+            
             if not symbols:
-                self.send_response(400)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "No valid symbols"}).encode())
+                self.send_error(400, "No valid symbols")
                 return
             
             results = {}
+            stale_symbols = []
+
+            # STEP 1: Check cache for each symbol 
             for symbol in symbols:
                 try:
-                    data = get_stock_summary_cached(symbol)
-                    # data = {"error": "Error test"}
+                    entry = cache.get(symbol)
+                    if entry and not is_cache_expired(entry, ttl_seconds=600):
+                        print(f"Retrieve data from cache: {symbol}")
+                        results[symbol] = entry[0]
+                    else:
+                        stale_symbols.append(symbol)
+                except Exception as e:
+                    stale_symbols.append(symbol)
+                    results[symbol] = {"error": f"Cache error: {str(e)}"}
+            
+            # STEP 2: Batch fetch only stale symbols (if any)
+            if stale_symbols:
+                fresh_data = get_stock_summary_multiple(stale_symbols)
+                for symbol, data in fresh_data.items():
+                    cache[symbol] = (data, time.time())
                     results[symbol] = data
-                except FinanceDataError as e:
-                    results[symbol] = {"error": str(e)}
 
+            # Send JSON response
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(results).encode())
-        
+
         else:
             self.send_error(404, 'Not found')
     
