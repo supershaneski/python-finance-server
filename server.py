@@ -5,6 +5,11 @@ import socketserver
 import os
 import time
 import yfinance as yf
+from datetime import datetime, timezone
+import pytz
+
+ET = pytz.timezone('US/Eastern')
+now = datetime.now(ET)
 
 # Simple caching
 cache = {}  # global dict: {ticker: (data, timestamp)}
@@ -30,14 +35,73 @@ class FinanceDataError(Exception):
     """Custom exception for finance data retrieval errors."""
     pass
 
+def get_market_state() -> str:
+    """
+    Returns current US stock market state:
+    - 'regular': 9:30 AM – 4:00 PM ET
+    - 'pre': 4:00 AM – 9:30 AM ET
+    - 'post': 4:00 PM – 8:00 PM ET
+    - 'closed': All other times (nights, weekends, holidays)
+    """
+    now = datetime.now(ET)
+    current_time = now.time()
+    weekday = now.weekday()  # 0=Mon, 6=Sun
+
+    # Weekends
+    if weekday >= 5:
+        return "closed"
+
+    # Define market times
+    pre_start = datetime.strptime("04:00", "%H:%M").time()
+    regular_start = datetime.strptime("09:30", "%H:%M").time()
+    regular_end = datetime.strptime("16:00", "%H:%M").time()
+    post_end = datetime.strptime("20:00", "%H:%M").time()
+
+    if pre_start <= current_time < regular_start:
+        return "pre"
+    elif regular_start <= current_time < regular_end:
+        return "regular"
+    elif regular_end <= current_time < post_end:
+        return "post"
+    else:
+        return "closed"
+
+def is_market_open():
+    now = datetime.now(ET)
+    time = now.time()
+    
+    if now.weekday() >= 5:  # Sat/Sun
+        return False
+    
+    # Check US holidays? (optional — use `holidays` lib)
+    
+    if time >= datetime.strptime("09:30", "%H:%M").time() and time <= datetime.strptime("16:00", "%H:%M").time():
+        return "regular"
+    elif time >= datetime.strptime("04:00", "%H:%M").time() and time <= datetime.strptime("20:00", "%H:%M").time():
+        return "extended"
+    else:
+        return "closed"
+
+def get_ttl_seconds():
+    state = is_market_open()
+    if state == "regular":
+        return 60    # 1 minute
+    elif state == "extended":
+        return 300   # 5 minutes
+    else:
+        return 86400 # 24 hours (or until next open)
+
 def get_stock_summary(symbol):
     print(f"Retrieve data from API: {symbol}")
     try:
         t = yf.Ticker(symbol)
+        if not t:
+            raise FinanceDataError(f"No ticker object for '{symbol}'")
+        
         info = t.info
         if not info or "shortName" not in info:
             raise FinanceDataError(f"No data found for ticker '{symbol}'")
-
+        
         return {
             "company": {
                 "name": info.get("shortName"),
@@ -62,6 +126,14 @@ def get_stock_summary(symbol):
                 "recommendation": info.get("recommendationKey"),
                 "targetMeanPrice": info.get("targetMeanPrice"),
             },
+            "metadata": {
+                "cached_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "last_trade_at": (
+                    datetime.fromtimestamp(info['regularMarketTime']).isoformat() + 'Z'
+                    if info.get('regularMarketTime') else None
+                ),
+                "market_state": get_market_state()
+            }
         }
     
     except FinanceDataError:
@@ -113,6 +185,14 @@ def get_stock_summary_multiple(symbols):
                     "recommendation": info.get("recommendationKey"),
                     "targetMeanPrice": info.get("targetMeanPrice"),
                 },
+                "metadata": {
+                    "cached_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "last_trade_at": (
+                        datetime.fromtimestamp(info['regularMarketTime']).isoformat() + 'Z'
+                        if info.get('regularMarketTime') else None
+                    ),
+                    "market_state": get_market_state()
+                }
             }
         except FinanceDataError:
             raise
@@ -121,7 +201,7 @@ def get_stock_summary_multiple(symbols):
 
     return results
 
-def get_stock_summary_cached(symbol, ttl=600):
+def get_stock_summary_cached(symbol, ttl=get_ttl_seconds()): # 600
     now = time.time()
     if symbol in cache:
         data, ts = cache[symbol]
@@ -133,10 +213,10 @@ def get_stock_summary_cached(symbol, ttl=600):
     cache[symbol] = (data, now)
     return data
 
-def is_cache_expired(cached_data, ttl_seconds: int = 600) -> bool:
+def is_cache_expired(cached_data, ttl=get_ttl_seconds()) -> bool: # cached_data, ttl_seconds: int = 600
     try:
         _, ts = cached_data  # (value, timestamp)
-        return (time.time() - ts) > ttl_seconds
+        return (time.time() - ts) > ttl
     except Exception:
         return True
 
@@ -217,7 +297,7 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
             for symbol in symbols:
                 try:
                     entry = cache.get(symbol)
-                    if entry and not is_cache_expired(entry, ttl_seconds=600):
+                    if entry and not is_cache_expired(entry): # is_cache_expired(entry, ttl_seconds=600)
                         print(f"Retrieve data from cache: {symbol}")
                         results[symbol] = entry[0]
                     else:
