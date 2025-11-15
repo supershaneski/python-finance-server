@@ -67,9 +67,9 @@ http://localhost:8000/ticker?id=MSFT
       "targetMeanPrice": 415.24
     },
     "metadata": {
-      "cached_at": "2025-11-15T09:00:00Z",
-      "last_trade_at": "2025-11-15T06:00:00Z",
-      "market_state": "closed"
+      "cachedAt": "2025-11-15T09:00:00Z",
+      "lastTradeAt": "2025-11-15T06:00:00Z",
+      "marketState": "closed"
     }
   }
 }
