@@ -127,12 +127,12 @@ def get_stock_summary(symbol):
                 "targetMeanPrice": info.get("targetMeanPrice"),
             },
             "metadata": {
-                "cached_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-                "last_trade_at": (
+                "cachedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "lastTradeAt": (
                     datetime.fromtimestamp(info['regularMarketTime']).isoformat() + 'Z'
                     if info.get('regularMarketTime') else None
                 ),
-                "market_state": get_market_state()
+                "marketState": get_market_state()
             }
         }
     
@@ -186,12 +186,12 @@ def get_stock_summary_multiple(symbols):
                     "targetMeanPrice": info.get("targetMeanPrice"),
                 },
                 "metadata": {
-                    "cached_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-                    "last_trade_at": (
+                    "cachedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "lastTradeAt": (
                         datetime.fromtimestamp(info['regularMarketTime']).isoformat() + 'Z'
                         if info.get('regularMarketTime') else None
                     ),
-                    "market_state": get_market_state()
+                    "marketState": get_market_state()
                 }
             }
         except FinanceDataError:
