@@ -24,9 +24,9 @@ Learn how to use `yfinance` effectively while building a clean, cache-aware micr
 
   * Single ticker: `GET /ticker?id=AAPL`
   * Multi-tickers: `GET /tickers?symbols=AAPL,MSFT`
-* **Caching**: 10-minute in-memory cache (configurable TTL)
-* **Consistent JSON responses** keyed by ticker symbol (`{ SYMBOL: {...} }`)
-* **Zero dependencies** beyond `yfinance`
+  * **Caching**: 10-minute in-memory cache (configurable TTL)
+  * **Consistent JSON responses** keyed by ticker symbol (`{ SYMBOL: {...} }`)
+  * **Zero dependencies** beyond `yfinance`
 
 ### API Endpoint
 
@@ -114,7 +114,7 @@ http://localhost:8000/tickers?symbols=AAPL,MSFT
 
 1. **Clone or download this project**
     ```sh
-    git clone https://github.com/<yourname>/python-finance-server.git
+    git clone https://github.com/supershaneski/python-finance-server.git
     cd python-finance-server
     ```
 
@@ -156,14 +156,16 @@ http://localhost:8000/tickers?symbols=AAPL,MSFT
    python3 server.py
    ```
 
-   Server starts at: `http://localhost:8000` (or your custom port)
+   The server runs at `http://localhost:8000` (or your custom port).
+   You can also access it through your machine’s IP address (`http://<your_own_ipaddress>:8000`), allowing other devices like tablets or phones to connect.
+   Make sure to **allow incoming network connections** — this is required for the client app to reach the server.
 
 ### Example Usage
 
 **curl**
 ```bash
 curl "http://localhost:8000/ticker?id=AAPL"
-curl "http://localhost:8000/tickers?symbols=AAPL,MSFT"
+curl "http://<your_own_ipaddress>:8000/tickers?symbols=AAPL,MSFT"
 ```
 
 **Javascript / Fetch**
@@ -172,7 +174,7 @@ fetch('http://localhost:8000/ticker?id=AAPL')
   .then(r => r.json())
   .then(data => console.log(data));
 
-fetch('http://localhost:8000/tickers?symbols=AAPL,MSFT')
+fetch('http://<your_own_ipaddress>:8000/tickers?symbols=AAPL,MSFT')
   .then(r => r.json())
   .then(data => console.log(data));
 ```
