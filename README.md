@@ -24,11 +24,12 @@ Learn how to use `yfinance` effectively while building a clean, cache-aware micr
 
   * Single ticker: `GET /ticker?id=AAPL`
   * Multi-tickers: `GET /tickers?symbols=AAPL,MSFT`
+  * History: `GET /history?id=AAPL&range=1D`
   * **Caching**: 10-minute in-memory cache (configurable TTL)
   * **Consistent JSON responses** keyed by ticker symbol (`{ SYMBOL: {...} }`)
   * **Zero dependencies** beyond `yfinance`
 
-### API Endpoint
+### API Endpoints
 
 #### `GET /ticker?id=<TICKER>`
 
@@ -82,7 +83,7 @@ http://localhost:8000/ticker?id=MSFT
 
 ---
 
-#### `GET /tickers?symbols=<TICKER1,TICKER2,...>`
+#### `GET /history?id=<TICKER1,TICKER2,...>`
 
 **Notes:** Supports multiple comma-separated tickers. Returns JSON keyed by symbol.
 
@@ -108,6 +109,36 @@ http://localhost:8000/tickers?symbols=AAPL,MSFT
   "AAPL": { ... },
   "INVALID": { "error": "No data found for ticker 'INVALID'" }
 }
+```
+
+---
+
+#### `GET /history?symbols=<TICKER>&range=<RANGE>`
+
+**Notes:** Supports only a single ticker. `range` values: `1D`, `1W`, `1M`, `3M`, `1Y`, `5Y`. Returns JSON object keyed by ticker symbol with historical data and cached timestamp.
+
+**Example:**
+
+```
+http://localhost:8000/history?id=AAPL&range=1d
+```
+
+**Sample Response:**
+```json
+{
+  "AAPL": {
+    "data": [
+      { "timestamp": "2025-11-17T09:30:00-05:00", "open": 191.12, "high": 191.40, "low": 190.80, "close": 191.02, "volume": 203819 },
+      ...
+    ],
+    "cached_at": 1763427160
+  }
+}
+```
+
+**Error Example:**
+```json
+{ "error": "No data found for ticker 'INVALID'" }
 ```
 
 ### Setup
@@ -159,24 +190,5 @@ http://localhost:8000/tickers?symbols=AAPL,MSFT
    The server runs at `http://localhost:8000` (or your custom port).
    You can also access it through your machine’s IP address (`http://<your_own_ipaddress>:8000`), allowing other devices like tablets or phones to connect.
    Make sure to **allow incoming network connections** — this is required for the client app to reach the server.
-
-### Example Usage
-
-**curl**
-```bash
-curl "http://localhost:8000/ticker?id=AAPL"
-curl "http://<your_own_ipaddress>:8000/tickers?symbols=AAPL,MSFT"
-```
-
-**Javascript / Fetch**
-```js
-fetch('http://localhost:8000/ticker?id=AAPL')
-  .then(r => r.json())
-  .then(data => console.log(data));
-
-fetch('http://<your_own_ipaddress>:8000/tickers?symbols=AAPL,MSFT')
-  .then(r => r.json())
-  .then(data => console.log(data));
-```
 
 ---

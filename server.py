@@ -12,7 +12,9 @@ ET = pytz.timezone('US/Eastern')
 now = datetime.now(ET)
 
 # Simple caching
-cache = {}  # global dict: {ticker: (data, timestamp)}
+cache = {}  # dict: { ticker: (data, timestamp) }
+history_cache = {} # dict: { ticker: { range: { timestamp, data } } }
+history_cache_ts = {} # dict: { ticker: last_fetch_timestamp }
 
 def load_env():
     """Load environment variables from .env file."""
@@ -318,6 +320,102 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(results).encode())
+
+        elif path == '/history':
+            # Support only a single symbol: ?id=AAPL&range=1D
+            symbol = query.get('id', [None])[0]
+            range_key = query.get('range', [None])[0]
+
+            if not symbol or not range_key:
+                self.send_error(400, "Missing 'id' or 'range'")
+                return
+
+            symbol = symbol.strip().upper()
+            range_key = range_key.strip().upper()
+            
+            RANGE_MAP = {
+                "1D": {"period": "1d",  "interval": "1m"},
+                "1W": {"period": "5d",  "interval": "15m"},
+                "1M": {"period": "1mo", "interval": "1h"},
+                "3M": {"period": "3mo", "interval": "1d"},
+                "1Y": {"period": "1y",  "interval": "1d"},
+                "5Y": {"period": "5y",  "interval": "1wk"},
+            }
+
+            if range_key not in RANGE_MAP:
+                self.send_error(400, f"Invalid range: {range_key}")
+                return
+            
+            now_ts = int(time.time())
+            CACHE_TTL = 60 * 10  # 10 minutes
+
+            cache_entry = history_cache.get(symbol, {}).get(range_key)
+            
+            if cache_entry and (now_ts - cache_entry["timestamp"] < CACHE_TTL):
+                """
+                payload = {
+                    "symbol": symbol,
+                    "cached_at": history_cache_ts.get(symbol),
+                    "data": cache_entry["data"],
+                }
+                """
+                payload = { 
+                    symbol: {
+                        "data": cache_entry["data"],
+                        "cached_at": history_cache_ts.get(symbol),
+                    }
+                }
+
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(payload).encode())
+                return
+            
+            config = RANGE_MAP[range_key]
+            period = config["period"]
+            interval = config["interval"]
+
+            try:
+                df = yf.Ticker(symbol).history(
+                    period=period,
+                    interval=interval
+                )
+
+                # Convert to JSON-friendly (timestamps → ISO)
+                data = [
+                    {
+                        "timestamp": idx.isoformat(),
+                        "open": float(row["Open"]),
+                        "high": float(row["High"]),
+                        "low": float(row["Low"]),
+                        "close": float(row["Close"]),
+                        "volume": int(row["Volume"]),
+                    }
+                    for idx, row in df.iterrows()
+                ]
+
+                history_cache.setdefault(symbol, {})[range_key] = {
+                    "timestamp": now_ts,
+                    "data": data,
+                }
+                history_cache_ts[symbol] = now_ts
+
+                payload = { 
+                    symbol: {
+                        "data": data,
+                        "cached_at": history_cache_ts.get(symbol),
+                    }
+                }
+
+            except Exception as e:
+                self.send_error(500, f"Error fetching history: {e}")
+                return
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(payload).encode())
 
         else:
             self.send_error(404, 'Not found')
