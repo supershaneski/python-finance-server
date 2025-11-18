@@ -131,7 +131,7 @@ http://localhost:8000/history?id=AAPL&range=1d
       { "timestamp": "2025-11-17T09:30:00-05:00", "open": 191.12, "high": 191.40, "low": 190.80, "close": 191.02, "volume": 203819 },
       ...
     ],
-    "cached_at": 1763427160
+    "cachedAt": 1763427160
   }
 }
 ```
