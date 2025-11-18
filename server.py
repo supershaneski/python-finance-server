@@ -352,17 +352,10 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
             cache_entry = history_cache.get(symbol, {}).get(range_key)
             
             if cache_entry and (now_ts - cache_entry["timestamp"] < CACHE_TTL):
-                """
-                payload = {
-                    "symbol": symbol,
-                    "cached_at": history_cache_ts.get(symbol),
-                    "data": cache_entry["data"],
-                }
-                """
                 payload = { 
                     symbol: {
                         "data": cache_entry["data"],
-                        "cached_at": history_cache_ts.get(symbol),
+                        "cachedAt": history_cache_ts.get(symbol),
                     }
                 }
 
@@ -404,7 +397,7 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
                 payload = { 
                     symbol: {
                         "data": data,
-                        "cached_at": history_cache_ts.get(symbol),
+                        "cachedAt": history_cache_ts.get(symbol),
                     }
                 }
 
