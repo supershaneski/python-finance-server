@@ -149,7 +149,7 @@ This is a sample client app, built with **Expo + React Native**, that demonstrat
 |-------------------------------------------|---------------------------------------------|
 | ![Main screen](./docs/screen1.webp) | ![Detail screen](./docs/screen2.webp) |
 
-> **Note:** The client app is still under active development.
+**Note:** The client app is still under active development.
 
 
 ### Setup
