@@ -141,6 +141,17 @@ http://localhost:8000/history?id=AAPL&range=1d
 { "error": "No data found for ticker 'INVALID'" }
 ```
 
+### Sample Client Application
+
+This is a sample client app, built with **Expo + React Native**, that demonstrates how to consume data from the API.
+
+| Main List Screen                          | Detail Screen                               |
+|-------------------------------------------|---------------------------------------------|
+| ![Main screen](./docs/screen1.webp) | ![Detail screen](./docs/screen2.webp) |
+
+> **Note:** The client app is still under active development.
+
+
 ### Setup
 
 1. **Clone or download this project**
