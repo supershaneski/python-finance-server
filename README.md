@@ -113,7 +113,7 @@ http://localhost:8000/tickers?symbols=AAPL,MSFT
 
 ---
 
-#### `GET /history?symbols=<TICKER>&range=<RANGE>`
+#### `GET /history?id=<TICKER>&range=<RANGE>`
 
 **Notes:** Supports only a single ticker. `range` values: `1D`, `1W`, `1M`, `3M`, `1Y`, `5Y`. Returns JSON object keyed by ticker symbol with historical data and cached timestamp.
 
