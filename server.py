@@ -352,6 +352,9 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
             cache_entry = history_cache.get(symbol, {}).get(range_key)
             
             if cache_entry and (now_ts - cache_entry["timestamp"] < CACHE_TTL):
+                
+                print(f"Retrieve data from cache: {symbol} {range_key}")
+
                 payload = { 
                     symbol: {
                         "data": cache_entry["data"],
@@ -370,6 +373,8 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
             interval = config["interval"]
 
             try:
+                print(f"Retrieve data from API: {symbol} {range_key}")
+
                 df = yf.Ticker(symbol).history(
                     period=period,
                     interval=interval
