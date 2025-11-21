@@ -143,13 +143,13 @@ http://localhost:8000/history?id=AAPL&range=1d
 
 ### Sample Client Application
 
-This is a sample client app, built with **Expo + React Native**, that demonstrates how to consume data from the API.
+This is a sample client app, built with **React Native (Expo SDK)**, that demonstrates how to consume data from the API.
 
-| Main Screen                          | Detail Screen                               |
-|-------------------------------------------|---------------------------------------------|
-| ![Main screen](./docs/screen1.webp) | ![Detail screen](./docs/screen2.webp) |
+| Watchlist | Stock Detail & History |
+|:---:|:---:|
+| ![Main screen](https://github.com/supershaneski/ReactNativeFinanceApp/raw/main/docs/screen1.webp) | ![Detail screen](https://github.com/supershaneski/ReactNativeFinanceApp/raw/main/docs/screen2.webp) |
 
-**Note:** The client app is still under active development.
+**Repository:** [ReactNativeFinanceApp](https://github.com/supershaneski/ReactNativeFinanceApp)
 
 
 ### Setup
