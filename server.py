@@ -347,11 +347,10 @@ class SimpleRESTServer(BaseHTTPRequestHandler):
                 return
             
             now_ts = int(time.time())
-            CACHE_TTL = 60 * 10  # 10 minutes
 
             cache_entry = history_cache.get(symbol, {}).get(range_key)
             
-            if cache_entry and (now_ts - cache_entry["timestamp"] < CACHE_TTL):
+            if cache_entry and (now_ts - cache_entry["timestamp"] < get_ttl_seconds()):
                 
                 print(f"Retrieve data from cache: {symbol} {range_key}")
 
